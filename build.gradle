@@ -27,7 +27,7 @@ ext {
 	projectGroupId = project.group
 	projectArtifactId = project.name
 	projectVersion = project.version
-	stubrunnerIds = 'com.example.github:github-webhook-kubernetes'
+	stubrunnerIds = 'com.example.github:github-webhook'
 	// sc-pipelines & k8s
 	dockerImagePrefix = "scpipelines"
 	dockerImageName = "${dockerImagePrefix}/${project.name}"
