@@ -8,13 +8,15 @@ buildscript {
 	repositories {
 		mavenCentral()
 		mavenLocal()
-    maven { url "http://repo.spring.io/snapshot" }
-    maven { url "http://repo.spring.io/milestone" }
-    maven { url "http://repo.spring.io/release" }
+		maven { url "http://repo.spring.io/snapshot" }
+		maven { url "http://repo.spring.io/milestone" }
+		maven { url "http://repo.spring.io/release" }
 	}
 	dependencies {
 		classpath "org.springframework.boot:spring-boot-gradle-plugin:1.5.3.RELEASE"
 		classpath "org.springframework.cloud:spring-cloud-contract-gradle-plugin:${project.hasProperty("scContractVersion") ? project.property("scContractVersion") : "1.1.1.RELEASE"}"
+		// sc-pipelines & k8s
+		classpath 'com.bmuschko:gradle-docker-plugin:3.1.0'
 	}
 }
 
@@ -25,7 +27,10 @@ ext {
 	projectGroupId = project.group
 	projectArtifactId = project.name
 	projectVersion = project.version
-	stubrunnerIds = 'com.example.github:github-webhook'
+	stubrunnerIds = 'com.example.github:github-webhook-kubernetes'
+	// sc-pipelines & k8s
+	dockerImagePrefix = "scpipelines"
+	dockerImageName = "${dockerImagePrefix}/${project.name}"
 }
 
 repositories {
@@ -47,6 +52,62 @@ dependencyManagement {
 	}
 }
 
+// sc-pipelines & k8s
+// example of docker setup
+apply plugin: 'com.bmuschko.docker-remote-api'
+
+import com.bmuschko.gradle.docker.tasks.image.*
+
+docker {
+	registryCredentials {
+		url = getProp('DOCKER_URL') ?: 'https://index.docker.io/v1/'
+		username = getProp('DOCKER_USERNAME') ?: "changeme"
+		password = getProp('DOCKER_PASSWORD') ?: "changeme"
+		email = getProp('DOCKER_EMAIL') ?: "changeme"
+	}
+}
+
+task createDockerfile(type: Dockerfile) {
+	destFile = project.file('build/libs/Dockerfile')
+	from 'frolvlad/alpine-oraclejdk8:slim'
+	String sysProps = getProp("SYSTEM_PROPS") ?: "-Dfoo=bar"
+	environmentVariable("SYSTEM_PROPS", sysProps)
+	addFile("/${project.name}-${project.version}.jar", "/")
+	entryPoint("sh", "-c", "java \${SYSTEM_PROPS} -Djava.security.egd=file:/dev/./urandom -jar /${project.name}-${project.version}.jar")
+}
+
+task buildImage(type: DockerBuildImage) {
+	dependsOn([createDockerfile, jar, check])
+	inputDir = createDockerfile.destFile.parentFile
+	tags = ["${dockerImageName}".toString()] as Set<String>
+}
+
+task tagImage(type: DockerTagImage) {
+	dependsOn([buildImage])
+	targetImageId { buildImage.getImageId() }
+	repository = "${dockerImageName}"
+	tag = project.version
+}
+
+task pushLatestImage(type: DockerPushImage) {
+	dependsOn([tagImage])
+	imageName = "${dockerImageName}"
+	tag = "latest"
+}
+
+task pushConcreteImage(type: DockerPushImage) {
+	dependsOn([tagImage])
+	imageName = "${dockerImageName}"
+	tag = project.version
+}
+
+task pushImages {
+	dependsOn([pushLatestImage, pushConcreteImage])
+}
+
+deploy.dependsOn pushImages
+
+// sc-pipelines contract testing
 if (gradle.startParameter.taskRequests.any { it.args.contains("apiCompatibility") }) {
 	contracts {
 		baseClassForTests = 'org.springframework.github.BaseClass'
@@ -92,8 +153,7 @@ dependencies {
 publishing {
 	repositories {
 		maven {
-			// REPO_WITH_JARS is deprecated
-			url getProp('REPO_WITH_JARS') ?: getProp('REPO_WITH_BINARIES') ?: 'http://localhost:8081/artifactory/libs-release-local'
+			url getProp('REPO_WITH_BINARIES') ?: 'http://localhost:8081/artifactory/libs-release-local'
 			credentials {
 				username getProp('M2_SETTINGS_REPO_USERNAME') ?: 'admin'
 				password getProp('M2_SETTINGS_REPO_PASSWORD') ?: 'password'
