@@ -1,0 +1,8 @@
+spring:
+  rabbitmq.addresses: github-rabbitmq:5672
+  jpa.hibernate.ddl-auto: none
+  datasource:
+      driverClassName: com.mysql.jdbc.Driver
+      url: jdbc:mysql://github-mysql/github?autoReconnect=true&useSSL=false
+      username: root
+      password: test
