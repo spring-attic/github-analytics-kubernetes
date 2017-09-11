@@ -11,6 +11,7 @@ test:
       name: rabbitmq-github-analytics
     - type: mysql
       name: mysql-github-analytics
+      database: github
     - type: eureka
       name: eureka-github-analytics
       coordinates: scpipelines/github-eureka:latest
@@ -24,6 +25,7 @@ stage:
       name: github-rabbitmq
     - type: mysql
       name: mysql-github
+      database: github
     - type: eureka
       name: github-eureka
       coordinates: scpipelines/github-eureka:latest
