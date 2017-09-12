@@ -24,7 +24,7 @@ stage:
     - type: rabbitmq
       name: github-rabbitmq
     - type: mysql
-      name: mysql-github
+      name: mysql-github-analytics
       database: github
     - type: eureka
       name: github-eureka
