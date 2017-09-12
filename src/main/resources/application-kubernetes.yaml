@@ -3,6 +3,6 @@ spring:
   jpa.hibernate.ddl-auto: none
   datasource:
     driverClassName: com.mysql.jdbc.Driver
-    url: jdbc:mysql://github-mysql/github?autoReconnect=true&useSSL=false
-    username: root
-    password: test
+    url: jdbc:mysql://github-mysql:3306/github?autoReconnect=true&useSSL=false
+    username: ${MYSQL_DB_USER}
+    password: ${MYSQL_DB_PASSWORD}
