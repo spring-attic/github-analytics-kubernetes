@@ -1,17 +1,24 @@
 package e2e;
 
+import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.KubernetesClient;
+
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.nio.file.Files;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.kubernetes.KubernetesClientProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -35,6 +42,9 @@ public class E2eTests {
 
 	@Value("${application.url}") String applicationUrl;
 	@Value("${classpath:json/issue-created.json}") Resource json;
+	@Autowired KubernetesClient client;
+	@Autowired Config config;
+	@Value("${minikube:true}") Boolean minikube;
 
 	RestTemplate restTemplate = new RestTemplate();
 
@@ -54,10 +64,23 @@ public class E2eTests {
 
 	private ResponseEntity<String> callData() throws IOException {
 		return this.restTemplate.exchange(RequestEntity
-				.post(URI.create("http://" +
-						this.applicationUrl.replace("github-analytics", "github-webhook")))
+				.post(URI.create("http://" + githubWebhookUrl()))
 				.contentType(MediaType.APPLICATION_JSON)
 				.body(data()), String.class);
+	}
+
+	private String githubWebhookUrl() {
+		if (this.minikube) {
+			List<Service> githubWebhookSvc = this.client.services().withLabel("name", "github-webhook")
+					.list().getItems();
+			if (githubWebhookSvc.isEmpty()) {
+				throw new IllegalStateException("No github-webhook service was found");
+			}
+			Integer port = githubWebhookSvc.get(0).getSpec().getPorts().get(0).getNodePort();
+			String host = URI.create(this.config.getMasterUrl()).getHost();
+			return host + ":" + port;
+		}
+		return "github-webhook";
 	}
 
 	public String data() throws IOException {
