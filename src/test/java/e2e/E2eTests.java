@@ -44,7 +44,7 @@ public class E2eTests {
 	@Value("${classpath:json/issue-created.json}") Resource json;
 	@Autowired KubernetesClient client;
 	@Autowired Config config;
-	@Value("${minikube:true}") Boolean minikube;
+	@Value("${kubernetes.minikube:true}") Boolean minikube;
 
 	RestTemplate restTemplate = new RestTemplate();
 
