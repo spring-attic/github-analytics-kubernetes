@@ -2,9 +2,12 @@ package org.springframework.github;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.actuate.metrics.GaugeService;
+import org.springframework.metrics.instrument.Gauge;
 import org.springframework.metrics.instrument.MeterRegistry;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +32,7 @@ class IssuesService {
 
 	List<IssueDto> allIssues() {
 		List<IssueDto> dtos = new ArrayList<>();
-		this.repository.findAll().forEach(i -> dtos.add(new IssueDto(i.getUsername(), i.getRepo())));
+		this.repository.findAll().forEach(i -> dtos.add(new IssueDto(i.getUsername(), i.getRepository())));
 		return dtos;
 	}
 
