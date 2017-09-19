@@ -1,6 +1,7 @@
 package e2e;
 
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.ServicePort;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
@@ -63,24 +64,31 @@ public class E2eTests {
 	}
 
 	private ResponseEntity<String> callData() throws IOException {
+		String uri = "http://" + githubWebhookUrl();
+		log.info("Will send a request to [" + uri + "]");
 		return this.restTemplate.exchange(RequestEntity
-				.post(URI.create("http://" + githubWebhookUrl()))
+				.post(URI.create(uri))
 				.contentType(MediaType.APPLICATION_JSON)
 				.body(data()), String.class);
 	}
 
 	private String githubWebhookUrl() {
+		List<ServicePort> ports = ports();
 		if (this.minikube) {
-			List<Service> githubWebhookSvc = this.client.services().withLabel("name", "github-webhook")
-					.list().getItems();
-			if (githubWebhookSvc.isEmpty()) {
-				throw new IllegalStateException("No github-webhook service was found");
-			}
-			Integer port = githubWebhookSvc.get(0).getSpec().getPorts().get(0).getNodePort();
+			Integer port = ports.get(0).getNodePort();
 			String host = URI.create(this.config.getMasterUrl()).getHost();
 			return host + ":" + port;
 		}
-		return "github-webhook";
+		return "github-webhook" + ":" + ports.get(0).getPort();
+	}
+
+	private List<ServicePort> ports() {
+		List<Service> githubWebhookSvc = this.client.services().withLabel("name", "github-webhook")
+				.list().getItems();
+		if (githubWebhookSvc.isEmpty()) {
+			throw new IllegalStateException("No github-webhook service was found");
+		}
+		return githubWebhookSvc.get(0).getSpec().getPorts();
 	}
 
 	public String data() throws IOException {
