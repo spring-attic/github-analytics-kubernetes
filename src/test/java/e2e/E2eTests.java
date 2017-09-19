@@ -46,6 +46,7 @@ public class E2eTests {
 	@Autowired KubernetesClient client;
 	@Autowired Config config;
 	@Value("${kubernetes.minikube:true}") Boolean minikube;
+	@Value("${paas.namespace}") String kubernetesNamespace;
 
 	RestTemplate restTemplate = new RestTemplate();
 
@@ -79,7 +80,7 @@ public class E2eTests {
 			String host = URI.create(this.config.getMasterUrl()).getHost();
 			return host + ":" + port;
 		}
-		return "github-webhook" + ":" + ports.get(0).getPort();
+		return "github-webhook" + "." + this.kubernetesNamespace + ":" + ports.get(0).getPort();
 	}
 
 	private List<ServicePort> ports() {
