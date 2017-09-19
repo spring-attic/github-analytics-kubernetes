@@ -46,7 +46,7 @@ public class E2eTests {
 	@Autowired KubernetesClient client;
 	@Autowired Config config;
 	@Value("${kubernetes.minikube:true}") Boolean minikube;
-	@Value("${paas.namespace}") String kubernetesNamespace;
+	@Value("${kubernetes.namespace}") String kubernetesNamespace;
 
 	RestTemplate restTemplate = new RestTemplate();
 
