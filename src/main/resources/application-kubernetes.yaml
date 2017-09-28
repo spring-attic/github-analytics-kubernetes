@@ -1,8 +1,8 @@
 spring:
-  rabbitmq.addresses: github-rabbitmq.${PAAS_NAMESPACE}:5672
+  rabbitmq.addresses: github-rabbitmq:5672
   jpa.hibernate.ddl-auto: none
   datasource:
     driverClassName: com.mysql.jdbc.Driver
-    url: jdbc:mysql://mysql-github-analytics.${PAAS_NAMESPACE}/github?autoReconnect=true&useSSL=false
+    url: jdbc:mysql://mysql-github-analytics/github?autoReconnect=true&useSSL=false
     username: ${MYSQL_DB_USER}
     password: ${MYSQL_DB_PASSWORD}
