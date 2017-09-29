@@ -29,7 +29,7 @@ ext {
 	projectVersion = project.version
 	stubrunnerIds = 'com.example.github:github-webhook'
 	// sc-pipelines & k8s
-	dockerImagePrefix = "scpipelines"
+	dockerImagePrefix = getProp("DOCKER_REGISTRY_ORGANIZATION") ?: "scpipelines"
 	dockerImageName = "${dockerImagePrefix}/${project.name}"
 }
 
@@ -60,7 +60,7 @@ import com.bmuschko.gradle.docker.tasks.image.*
 
 docker {
 	registryCredentials {
-		url = getProp('DOCKER_URL') ?: 'https://index.docker.io/v1/'
+		url = getProp('DOCKER_REGISTRY_URL') ?: 'https://index.docker.io/v1/'
 		username = getProp('DOCKER_USERNAME') ?: "changeme"
 		password = getProp('DOCKER_PASSWORD') ?: "changeme"
 		email = getProp('DOCKER_EMAIL') ?: "changeme"
